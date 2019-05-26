@@ -8,7 +8,8 @@ const obj = {
     // route: [[3, [0, 0, 0], [0, 0, 0], [0, 2, 0], [0, 2, 0], [0, 4, 0], [0, 4, 0], [0, 6, 0], [0, 6, 0], [0, 6, 2], [0, 6, 2]]
     //     , [2, [0, 5, 15], [0, 5, 13], [0, 5, 11], [0, 5, 9], [0, 7, 9], [0, 7, 11], [0, 7, 13], [0, 7, 15], [0, 7, 17], [0, 9, 17]],
     // [8, [0, 0, 40], [0, 4, 40], [0, 8, 40], [0, 12, 40], [0, 12, 36], [0, 16, 36], [0, 16, 32], [0, 12, 32], [0, 8, 32], [0, 4, 32]]],
-    // ticks: 10,
+    ticks: 100,
+    route:[[0,[0,2,4],[0,3,4],[0,3,3],[0,3,2],[0,3,1],[0,3,0],,],[2,[1,1,3],[1,1,2],[1,1,1],[1,1,0],,]],
 };
 
 // 货物种类版
@@ -23,7 +24,7 @@ const mapHeight = obj.mapHeight;
 const route = obj.route;
 const colorPanel = ['black', 'lightgreen', 'red', 'yellow', 'orange']
 let mapArr = []; // map数组 3 * width * height
-let speed = 500; // 运动展示的速度
+let speed = 300; // 运动展示的速度
 
 
 
@@ -114,13 +115,13 @@ function initCargo() {
     }
 
     const tasks = obj.task
-    tasks.forEach(task=>{
+    tasks.forEach((task,index)=>{
         let size = cargoSize[task[3]],
         table = task[0],
         row = task[1],
         col = task[2],
-        color = cargoColor[task[3]]
-        drawCargo(size,table,row,col,color)
+        color = cargoColor[task[3]];
+        drawCargo(size,table,row,col,color,false,index+1)
     })
 }
 
@@ -129,6 +130,7 @@ function initCargo() {
   * desc: 货物运动按钮绑定
 */
 function moveCargo() {
+    getMap();
     if (mapArr.length === 0) {
         alert("需要先生成一个地图！");
         return;
@@ -137,26 +139,29 @@ function moveCargo() {
     const timer = setInterval(function () {
         // 设置定时器
         // 清楚上一tick的所有画面
-        if (tick != 1) {
-            let lastTick = tick - 1;
-            route.forEach(cargo => {
-                // 当这一tick与上一tick发生变化时
-                if (String(cargo[tick]) != String(cargo[lastTick])) {
-                    drawCargo(cargo[0], cargo[lastTick][0], cargo[lastTick][1],cargo[lastTick][2],colorPanel[1],true);
-                }
-            })
-        }
+        // if (tick != 1) {
+        //     let lastTick = tick - 1;
+        //     route.forEach(cargo => {
+        //         // 当这一tick与上一tick发生变化时
+        //         if (String(cargo[tick]) != String(cargo[lastTick])) {
+        //             // let mapPos = cargo[tick][1] * mapWidth + cargo[tick][2]
+        //             // let mapColor = colorPanel[mapArr[cargo[tick][0]][mapPos]]
+        //             drawMap()
+        //         }
+        //     })
+        // }
+        drawMap();
 
         // 绘制这一tick的画面
-        route.forEach(cargo => {
-            if(cargo[tick].length!=0)
-            drawCargo(cargo[0], cargo[tick][0], cargo[tick][1],cargo[tick][2], colorPanel[4]);
+        route.forEach((cargo,index) => {
+            if(typeof cargo[tick]!= "undefined")
+            drawCargo(cargoSize[cargo[0]], cargo[tick][0], cargo[tick][1],cargo[tick][2],cargoColor[cargo[0]],false,index+1);
         })
         tick++;
         if (tick > obj.ticks) {
             // tick 大于最终ticks 清楚定时器
             clearInterval(timer);
-            console.log("END");
+            alert("End!")
         }
     }, speed);
 }
@@ -165,7 +170,7 @@ function moveCargo() {
   * desc: 根据货物／地图建筑 的初始点(左上角坐标)绘制货物
   * args: size货物大小 table地图编号[1,2,3] row,col坐标行列 color绘制颜色 isClear是否为清除的标志
 */
-function drawCargo(size, table, row, col, color, isClear = false) {
+function drawCargo(size, table, row, col, color, isClear = false, isCargo = 0) {
     for (let i = row; i < row + size; i++) {
         for (let j = col; j < col + size; j++) {
             let pos = i * mapWidth + j;
@@ -181,6 +186,10 @@ function drawCargo(size, table, row, col, color, isClear = false) {
                 if(j == col) object.css("borderLeft",border)
                 if(j == col + size -1) object.css("borderRight",border)
             }
+            
+            let numPos = row * mapWidth + col;
+            $(`li[table='${table}'][pos='${numPos}']`).text(isCargo?isCargo:"")
+            
         }
     }
 
